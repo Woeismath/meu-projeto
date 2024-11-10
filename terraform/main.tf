@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_instance" "techshop_instance" {
-  ami           = "ami-0c55b159cbfafe1f0"  # Atualize para uma AMI válida para sua região
+  ami           = "ami-0984f4b9e98be44bf"  
   instance_type = "t2.micro"
 
   tags = {
