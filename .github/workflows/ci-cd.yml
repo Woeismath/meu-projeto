@@ -3,8 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main
-
+      - main  
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,11 +17,11 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t myapp .
+        docker build -t myapp .  # Se o nome da sua imagem for diferente, altere "myapp" aqui.
 
-    - name: Run Docker container
+    - name: Run Docker container locally (opcional, para testar)
       run: |
-        docker run -d -p 3000:3000 myapp
+        docker run -d -p 3000:3000 myapp  # Caso precise, altere a porta ou o nome da aplicação.
 
   deploy:
     runs-on: ubuntu-latest
@@ -32,7 +31,35 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    - name: Set up AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
     - name: Deploy to AWS EC2
+      env:
+        EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+        EC2_PUBLIC_IP: ${{ secrets.EC2_PUBLIC_IP }}
       run: |
-        echo "Deploying to AWS EC2..."
-        # Aqui você pode adicionar comandos para realizar o deploy na sua instância EC2.
+        # Salvar a chave privada da EC2 em um arquivo temporário
+        echo "$EC2_PRIVATE_KEY" > private_key.pem
+        chmod 600 private_key.pem
+
+        # Conectar via SSH e executar os comandos para fazer o deploy
+        ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$EC2_PUBLIC_IP << 'EOF'
+          # Instalar Docker na EC2 (se necessário)
+          sudo yum install -y docker
+          sudo service docker start
+
+          # Puxar a imagem Docker
+          docker pull myapp:latest  # Altere "myapp" para o nome correto da sua imagem, se necessário.
+
+          # Parar e remover o container anterior, se existir
+          docker stop myapp || true
+          docker rm myapp || true
+
+          # Rodar o novo container na instância EC2
+          docker run -d -p 3000:3000 --name myapp myapp:latest  # Altere conforme necessário.
+        EOF
