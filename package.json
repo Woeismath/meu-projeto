@@ -1,0 +1,13 @@
+{
+  "name": "techshop-app",
+  "version": "1.0.0",
+  "description": "Aplicação simples para demonstração de CI/CD",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo 'No tests implemented'"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
