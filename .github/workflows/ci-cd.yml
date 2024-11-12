@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,11 +18,11 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t myapp .  # Se o nome da sua imagem for diferente, altere "myapp" aqui.
+        docker build -t myapp .  # Verifique se "myapp" é o nome correto da sua imagem.
 
     - name: Run Docker container locally (opcional, para testar)
       run: |
-        docker run -d -p 3000:3000 myapp  # Caso precise, altere a porta ou o nome da aplicação.
+        docker run -d -p 3000:3000 myapp
 
   deploy:
     runs-on: ubuntu-latest
@@ -41,25 +42,16 @@ jobs:
     - name: Deploy to AWS EC2
       env:
         EC2_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-        EC2_PUBLIC_IP: ${{ secrets.EC2_PUBLIC_IP }}
+        EC2_PUBLIC_IP: ${{ secrets.EC2_PUBLIC_IP }}  # Certifique-se do nome correto no GitHub Secrets
       run: |
-       
         echo "$EC2_PRIVATE_KEY" > private_key.pem
         chmod 600 private_key.pem
 
-       
         ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$EC2_PUBLIC_IP << 'EOF'
-         
           sudo yum install -y docker
           sudo service docker start
 
-          
-          docker pull myapp:latest  # Altere "myapp" para o nome correto da sua imagem, se necessário.
-
-          
           docker stop myapp || true
           docker rm myapp || true
-
-         
-          docker run -d -p 3000:3000 --name myapp myapp:latest  # Altere conforme necessário.
+          docker run -d -p 3000:3000 --name myapp myapp:latest
         EOF
